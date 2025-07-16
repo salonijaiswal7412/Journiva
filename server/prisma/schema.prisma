@@ -1,0 +1,40 @@
+generator client{
+  provider="prisma-client-js"
+}
+
+datasource db{
+  provider="postgresql"
+  url=env("DATABASE_URL")
+}
+
+model User{
+  id    String  @id @default(uuid())
+  email String  @unique
+  password String? 
+  isGoogleUser Boolean @default(false)
+  createdAt DateTime @default(now())
+  streak   Int  @default(0)
+  lastEntryDate DateTime?
+  journalEntries Journal[]
+  events Event[]
+}
+
+model Journal{
+  id  String @id @default(uuid())
+  content  String
+  mood String
+  tags  String[]
+  isPrivate Boolean @default(false)
+  createdAt DateTime @default(now())
+  userId  String
+  user User @relation(fields:[userId],references:[id])
+}
+
+model Event{
+  id  String @id @default(uuid())
+  title   String
+  tag   String
+  eventDate DateTime
+  userId  String
+  user  User  @relation(fields:[userId],references:[id])
+}
