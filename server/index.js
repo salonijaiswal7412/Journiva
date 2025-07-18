@@ -2,8 +2,12 @@ require("dotenv").config();
 
 const express=require("express");
 const cors=require("cors");
+const session =require('express-session');
+const passport=require('passport');
+require('./config/passport');
 
 const userRoutes=require('./routes/userRoutes');
+const authRoutes=require('./routes/authRoutes');
 
 const {PrismaClient}= require("@prisma/client");
 
@@ -13,11 +17,26 @@ const {PrismaClient}= require("@prisma/client");
 const app=express();
 const prisma=new PrismaClient();
 
-app.use(cors());
+app.use(cors(
+    {
+        origin:"http://localhost:5173",
+        credentials:true,
+    }
+));
 app.use(express.json());
+
+app.use(session({
+    secret:process.env.JWT_SECRET,
+    resave:false,
+    saveUninitialized:false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 app.use('/api/users',userRoutes);
+app.use('/auth',authRoutes);
 
 
 app.get('/',(req,res)=>{
