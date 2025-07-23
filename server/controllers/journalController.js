@@ -1,33 +1,104 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Create a journal
-const createJournal = async (req, res) => {
-  const userId = req.user.id;
-  const { title, content, mood, tags, isPrivate = false } = req.body;
+const getLocalDateString = (date) => {
+  const d = new Date(date);
+  return d.getFullYear() + '-' + 
+         String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+         String(d.getDate()).padStart(2, '0');
+};
 
+const createJournal = async (req, res) => {
   try {
-    const journal = await prisma.journal.create({
+    const { title, content, mood, tags = [], isPrivate = false } = req.body;
+    const userId = req.userId || req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized - User ID not found" });
+    }
+
+    if (!title || !content) {
+      return res.status(400).json({ message: "Title and content are required" });
+    }
+
+    const today = new Date();
+    const todayDateString = getLocalDateString(today);
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const lastEntryDateString = user.lastEntryDate ? getLocalDateString(user.lastEntryDate) : null;
+    
+    let newStreak = user.streak;
+    let shouldUpdateStreak = false;
+
+    console.log('Debug - Today:', todayDateString);
+    console.log('Debug - Last Entry Date:', lastEntryDateString);
+    console.log('Debug - Current Streak:', user.streak);
+
+    if (!lastEntryDateString) {
+      newStreak = 1;
+      shouldUpdateStreak = true;
+      console.log('Debug - First entry, streak = 1');
+    } else if (lastEntryDateString !== todayDateString) {
+      const todayDate = new Date(todayDateString);
+      const lastDate = new Date(lastEntryDateString);
+      const daysDiff = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+      
+      console.log('Debug - Days difference:', daysDiff);
+      
+      if (daysDiff === 1) {
+        newStreak = user.streak + 1;
+        shouldUpdateStreak = true;
+        console.log('Debug - Consecutive day, incrementing streak to:', newStreak);
+      } else if (daysDiff > 1) {
+        newStreak = 1;
+        shouldUpdateStreak = true;
+        console.log('Debug - Gap in days, resetting streak to 1');
+      }
+    } else {
+      console.log('Debug - Same day, keeping streak at:', user.streak);
+    }
+
+    const newEntry = await prisma.journal.create({
       data: {
         title,
         content,
         mood,
         tags,
         isPrivate,
-        userId
-      }
+        userId,
+      },
     });
 
-    res.status(201).json(journal);
+    if (shouldUpdateStreak) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          streak: newStreak,
+          lastEntryDate: new Date(todayDateString),
+        },
+      });
+    }
+
+    res.status(201).json({ journal: newEntry, streak: newStreak });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to create journal" });
+    console.error("Error creating journal:", error);
+    res.status(500).json({ message: "Something went wrong" });
   }
 };
 
-// Get all journals of the logged-in user
 const getMyJournals = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.userId || req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized - User ID not found" });
+  }
 
   try {
     const journals = await prisma.journal.findMany({
@@ -42,11 +113,14 @@ const getMyJournals = async (req, res) => {
   }
 };
 
-// Update a journal
 const updateJournal = async (req, res) => {
   const journalId = req.params.id;
-  const userId = req.user.id;
+  const userId = req.userId || req.user?.id;
   const { title, content, mood, tags, isPrivate } = req.body;
+
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized - User ID not found" });
+  }
 
   try {
     const existing = await prisma.journal.findUnique({
@@ -75,10 +149,13 @@ const updateJournal = async (req, res) => {
   }
 };
 
-// Delete a journal
 const deleteJournal = async (req, res) => {
   const journalId = req.params.id;
-  const userId = req.user.id;
+  const userId = req.userId || req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized - User ID not found" });
+  }
 
   try {
     const existing = await prisma.journal.findUnique({
