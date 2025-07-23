@@ -8,6 +8,7 @@ const getLocalDateString = (date) => {
          String(d.getDate()).padStart(2, '0');
 };
 
+//Create Journal
 const createJournal = async (req, res) => {
   try {
     const { title, content, mood, tags = [], isPrivate = false } = req.body;
@@ -17,8 +18,8 @@ const createJournal = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized - User ID not found" });
     }
 
-    if (!title || !content) {
-      return res.status(400).json({ message: "Title and content are required" });
+    if (!title || !content || !mood) {
+      return res.status(400).json({ message: "Title, content, and mood are required" });
     }
 
     const today = new Date();
@@ -93,6 +94,7 @@ const createJournal = async (req, res) => {
   }
 };
 
+//Get All Journals for Logged-in User
 const getMyJournals = async (req, res) => {
   const userId = req.userId || req.user?.id;
 
@@ -113,6 +115,7 @@ const getMyJournals = async (req, res) => {
   }
 };
 
+//Update Journal Entry
 const updateJournal = async (req, res) => {
   const journalId = req.params.id;
   const userId = req.userId || req.user?.id;
@@ -149,6 +152,7 @@ const updateJournal = async (req, res) => {
   }
 };
 
+// Delete Journal Entry
 const deleteJournal = async (req, res) => {
   const journalId = req.params.id;
   const userId = req.userId || req.user?.id;

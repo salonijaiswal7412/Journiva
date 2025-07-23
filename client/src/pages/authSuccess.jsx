@@ -8,7 +8,7 @@ const AuthSuccess = () => {
     const token = new URLSearchParams(window.location.search).get("token");
     if (token) {
       localStorage.setItem("token", token);
-      navigate("/dashboard");
+      navigate("/");
     } else {
       navigate("/login"); // fallback if no token
     }
