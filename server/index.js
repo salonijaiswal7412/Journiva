@@ -9,6 +9,7 @@ require('./config/passport');
 const userRoutes=require('./routes/userRoutes');
 const authRoutes=require('./routes/authRoutes');
 const journalRoutes=require('./routes/journalRoutes');
+const promptRoutes=require('./routes/promptRoutes');
 
 const {PrismaClient}= require("@prisma/client");
 
@@ -37,6 +38,7 @@ app.use(passport.session());
 app.use('/api/users',userRoutes);
 app.use('/auth',authRoutes);
 app.use('/api/journals',journalRoutes);
+app.use('/api/prompts', promptRoutes);
 
 
 app.get('/',(req,res)=>{
