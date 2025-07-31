@@ -146,15 +146,22 @@
 
 // export default App;
 
+
 import React from 'react'
+import Hero from './pages/hero'
 import DailyPrompt from './components/DailyPrompt'
+import Signup from './pages/signup'
+import { Routes, Route } from 'react-router-dom';
 
-
-export default function App() {
+function App() {
   return (
-    <div>
-      <DailyPrompt/>
+    <div className='h-screen w-screen bg-white'>
+      <Routes>
+        <Route path="/" element={<Hero />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
     </div>
   )
 }
 
+export default App

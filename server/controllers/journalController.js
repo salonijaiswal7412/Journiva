@@ -8,22 +8,156 @@ const getLocalDateString = (date) => {
          String(d.getDate()).padStart(2, '0');
 };
 
+// DRY Streak Logic Helper
+const calculateStreakUpdate = (user, today) => {
+  const todayStr = getLocalDateString(today);
+  const lastStr = user.lastEntryDate ? getLocalDateString(user.lastEntryDate) : null;
+  
+  console.log('Debug - Today:', todayStr);
+  console.log('Debug - Last Entry Date:', lastStr);
+  console.log('Debug - Current Streak:', user.streak);
+
+  // Same day - no streak update needed
+  if (lastStr === todayStr) {
+    console.log('Debug - Same day, keeping streak at:', user.streak);
+    return { newStreak: user.streak, shouldUpdate: false };
+  }
+
+  let newStreak = 1; // Default for first entry or gap
+
+  if (!lastStr) {
+    // First entry ever
+    console.log('Debug - First entry, streak = 1');
+  } else {
+    // Calculate days difference
+    const diff = Math.floor((new Date(todayStr) - new Date(lastStr)) / (1000 * 60 * 60 * 24));
+    console.log('Debug - Days difference:', diff);
+    
+    if (diff === 1) {
+      // Consecutive day
+      newStreak = user.streak + 1;
+      console.log('Debug - Consecutive day, incrementing streak to:', newStreak);
+    } else if (diff > 1) {
+      // Gap in days
+      console.log('Debug - Gap in days, resetting streak to 1');
+    }
+  }
+
+  return { newStreak, shouldUpdate: true };
+};
+
+// Tag validation helper
+const validateTags = (tags) => {
+  if (!Array.isArray(tags)) {
+    return false;
+  }
+  return tags.every(tag => typeof tag === 'string');
+};
+
 //Create Journal
 const createJournal = async (req, res) => {
   try {
-    const { title, content, mood, tags = [], isPrivate = false } = req.body;
+    const { title, content, mood, tags = [], isPrivate = false, promptId } = req.body;
     const userId = req.userId || req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized - User ID not found" });
     }
 
-    if (!title || !content || !mood) {
-      return res.status(400).json({ message: "Title, content, and mood are required" });
+    if (!content || !mood) {
+      return res.status(400).json({ message: "Content and mood are required" });
+    }
+
+    // Validate tags if provided
+    if (tags.length > 0 && !validateTags(tags)) {
+      return res.status(400).json({ message: "Tags must be an array of strings" });
     }
 
     const today = new Date();
-    const todayDateString = getLocalDateString(today);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Calculate streak update using DRY helper
+    const { newStreak, shouldUpdate } = calculateStreakUpdate(user, today);
+
+    const newEntry = await prisma.journal.create({
+      data: {
+        title: title || "Untitled Entry", // Optional title with fallback
+        content,
+        mood,
+        tags,
+        isPrivate,
+        userId,
+        promptId: promptId || null,
+      },
+    });
+
+    if (shouldUpdate) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          streak: newStreak,
+          lastEntryDate: new Date(getLocalDateString(today)),
+        },
+      });
+    }
+
+    res.status(201).json({ journal: newEntry, streak: newStreak });
+  } catch (error) {
+    console.error("Error creating journal:", error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+// Respond to Today's Prompt
+const respondToPrompt = async (req, res) => {
+  try {
+    const { answer } = req.body;
+    const userId = req.userId || req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized - User ID not found" });
+    }
+
+    if (!answer) {
+      return res.status(400).json({ message: "Answer is required" });
+    }
+
+    // Get today's prompt
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayPrompt = await prisma.prompt.findUnique({
+      where: {
+        promptDate: today,
+      },
+    });
+
+    if (!todayPrompt) {
+      return res.status(404).json({ message: "No prompt available for today" });
+    }
+
+    // Check if user has already responded to today's prompt
+    const existingResponse = await prisma.promptResponse.findUnique({
+      where: {
+        userId_promptId: {
+          userId,
+          promptId: todayPrompt.id,
+        },
+      },
+    });
+
+    if (existingResponse) {
+      return res.status(409).json({ 
+        message: "You have already responded to today's prompt",
+        existingResponse 
+      });
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -33,64 +167,80 @@ const createJournal = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const lastEntryDateString = user.lastEntryDate ? getLocalDateString(user.lastEntryDate) : null;
-    
-    let newStreak = user.streak;
-    let shouldUpdateStreak = false;
+    // Calculate streak update using DRY helper
+    const { newStreak, shouldUpdate } = calculateStreakUpdate(user, today);
 
-    console.log('Debug - Today:', todayDateString);
-    console.log('Debug - Last Entry Date:', lastEntryDateString);
-    console.log('Debug - Current Streak:', user.streak);
-
-    if (!lastEntryDateString) {
-      newStreak = 1;
-      shouldUpdateStreak = true;
-      console.log('Debug - First entry, streak = 1');
-    } else if (lastEntryDateString !== todayDateString) {
-      const todayDate = new Date(todayDateString);
-      const lastDate = new Date(lastEntryDateString);
-      const daysDiff = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
-      
-      console.log('Debug - Days difference:', daysDiff);
-      
-      if (daysDiff === 1) {
-        newStreak = user.streak + 1;
-        shouldUpdateStreak = true;
-        console.log('Debug - Consecutive day, incrementing streak to:', newStreak);
-      } else if (daysDiff > 1) {
-        newStreak = 1;
-        shouldUpdateStreak = true;
-        console.log('Debug - Gap in days, resetting streak to 1');
-      }
-    } else {
-      console.log('Debug - Same day, keeping streak at:', user.streak);
-    }
-
-    const newEntry = await prisma.journal.create({
+    // Create prompt response
+    const promptResponse = await prisma.promptResponse.create({
       data: {
-        title,
-        content,
-        mood,
-        tags,
-        isPrivate,
+        answer,
         userId,
+        promptId: todayPrompt.id,
       },
     });
 
-    if (shouldUpdateStreak) {
+    if (shouldUpdate) {
       await prisma.user.update({
         where: { id: userId },
         data: {
           streak: newStreak,
-          lastEntryDate: new Date(todayDateString),
+          lastEntryDate: new Date(getLocalDateString(today)),
         },
       });
     }
 
-    res.status(201).json({ journal: newEntry, streak: newStreak });
+    res.status(201).json({ 
+      response: promptResponse, 
+      prompt: todayPrompt,
+      streak: newStreak 
+    });
   } catch (error) {
-    console.error("Error creating journal:", error);
+    console.error("Error responding to prompt:", error);
     res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+// Get Today's Prompt
+const getTodayPrompt = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?.id;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const prompt = await prisma.prompt.findUnique({
+      where: {
+        promptDate: today,
+      },
+    });
+
+    if (!prompt) {
+      return res.status(404).json({ message: 'No prompt for today' });
+    }
+
+    // Check if user has already responded to this prompt
+    let hasResponded = false;
+    let userResponse = null;
+
+    if (userId) {
+      userResponse = await prisma.promptResponse.findUnique({
+        where: {
+          userId_promptId: {
+            userId,
+            promptId: prompt.id,
+          },
+        },
+      });
+      hasResponded = !!userResponse;
+    }
+
+    res.json({ 
+      prompt, 
+      hasResponded,
+      userResponse 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -105,6 +255,15 @@ const getMyJournals = async (req, res) => {
   try {
     const journals = await prisma.journal.findMany({
       where: { userId },
+      include: {
+        prompt: {
+          select: {
+            id: true,
+            title: true,
+            content: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -186,4 +345,6 @@ module.exports = {
   getMyJournals,
   updateJournal,
   deleteJournal,
+  respondToPrompt,
+  getTodayPrompt,
 };

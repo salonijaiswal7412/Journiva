@@ -8,7 +8,7 @@ import OAuthSuccess from './pages/authSuccess.jsx';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <Routes>
-      <Route path="/" element={<App />} />
+      <Route path="*" element={<App />} />
       <Route path="/oauth-success" element={<OAuthSuccess />} />
     </Routes>
   </BrowserRouter>

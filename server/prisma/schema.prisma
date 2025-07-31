@@ -32,6 +32,9 @@ model Journal {
   updatedAt DateTime @updatedAt
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+
+  promptId  String?
+  prompt Prompt?  @relation(fields:[promptId],references:[id])
 }
 
 
@@ -50,6 +53,8 @@ model Prompt{
   createdAt DateTime  @default(now())
   responses PromptResponse[]
   promptDate DateTime @unique
+
+  journals Journal[]
 }
 
 model PromptResponse{

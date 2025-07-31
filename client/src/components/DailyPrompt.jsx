@@ -5,21 +5,24 @@ const DailyPrompt = () => {
   const [prompt, setPrompt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [response, setResponse] = useState("");
+  const [mood, setMood] = useState(""); // Add mood state
+  const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
+  const moods = [
+    'Happy', 'Sad', 'Angry', 'Tired', 'Grateful',
+    'Excited', 'Peaceful', 'Overwhelmed', 'Focused', 'Anxious'
+  ];
 
   useEffect(() => {
     const fetchPrompt = async () => {
       try {
-        console.log("Fetching prompt...");
-        const res = await axios.get("http://localhost:5000/api/prompts/today");
-        console.log("Response:", res.data);
-        setPrompt(res.data);
+        const res = await axios.get("http://localhost:5000/api/prompts/today", { withCredentials: true });
+        setPrompt(res.data.prompt);
+        setSubmitted(res.data.hasResponded);
         setError(null);
       } catch (err) {
-        console.error("Full error:", err);
-        console.error("Error response:", err.response?.data);
-        console.error("Error status:", err.response?.status);
-        
-        // Set user-friendly error message
         if (err.response?.status === 404) {
           setError("No prompt found for today");
         } else if (err.code === 'ERR_NETWORK') {
@@ -35,6 +38,29 @@ const DailyPrompt = () => {
 
     fetchPrompt();
   }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!response.trim() || !mood) {
+      setSubmitError("Please write a response and select your mood.");
+      return;
+    }
+
+    try {
+      await axios.post(
+        "http://localhost:5000/api/prompts/response",
+        { 
+          answer: response    // Backend expects "answer" field
+        },
+        { withCredentials: true }
+      );
+      setSubmitted(true);
+      setSubmitError(null);
+    } catch (err) {
+      setSubmitError(err.response?.data?.message || "Failed to submit your response.");
+      console.error("Submit error:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -55,8 +81,8 @@ const DailyPrompt = () => {
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
             <p className="text-red-600">{error}</p>
           </div>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors"
           >
             Try Again
@@ -70,22 +96,70 @@ const DailyPrompt = () => {
     <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-md mt-8">
       <h2 className="text-2xl font-bold mb-4 text-center text-indigo-700">Today's Prompt</h2>
       {prompt && prompt.question ? (
-        <div className="text-center">
-          <p className="text-lg text-gray-800 leading-relaxed mb-4">{prompt.question}</p>
-          <div className="text-sm text-gray-500">
-            {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+        <div>
+          <p className="text-lg text-gray-800 leading-relaxed mb-4 text-center">{prompt.question}</p>
+          <div className="text-sm text-gray-500 text-center mb-4">
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             })}
           </div>
+
+          {submitted ? (
+            <p className="text-green-600 text-center">You've already responded to today's prompt. Great job!</p>
+          ) : (
+            <form onSubmit={handleSubmit} className="mt-4">
+              <textarea
+                className="w-full p-3 border border-gray-300 rounded-lg mb-3"
+                rows="6"
+                value={response}
+                onChange={(e) => setResponse(e.target.value)}
+                placeholder="Write your response here..."
+              />
+              
+              {/* Mood Selection - Note: Current backend doesn't save mood for prompt responses */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">How are you feeling?</label>
+                <div className="flex flex-wrap gap-2">
+                  {moods.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMood(m)}
+                      className={`px-3 py-1 rounded-full border text-sm ${
+                        mood === m 
+                          ? 'bg-indigo-600 text-white border-indigo-600' 
+                          : 'bg-white text-gray-800 border-gray-300 hover:bg-indigo-50'
+                      } transition-colors`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Mood selection for user experience (backend currently only saves the text response)
+                </p>
+              </div>
+
+              {submitError && <p className="text-red-500 mb-2 text-sm">{submitError}</p>}
+              
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors"
+                disabled={!response.trim()}
+              >
+                Submit Response
+              </button>
+            </form>
+          )}
         </div>
       ) : (
         <div className="text-center">
           <p className="text-gray-500 mb-4">No prompt available for today.</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors"
           >
             Refresh
