@@ -8,11 +8,11 @@ const AuthSuccess = () => {
     const token = new URLSearchParams(window.location.search).get("token");
     if (token) {
       localStorage.setItem("token", token);
-      navigate("/");
+      navigate("/dashboard"); // Changed from "/" to "/dashboard"
     } else {
       navigate("/login"); // fallback if no token
     }
-  }, []);
+  }, [navigate]);
 
   return <p>Redirecting...</p>;
 };
