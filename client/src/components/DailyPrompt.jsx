@@ -119,29 +119,8 @@ const DailyPrompt = () => {
                 placeholder="Write your response here..."
               />
               
-              {/* Mood Selection - Note: Current backend doesn't save mood for prompt responses */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">How are you feeling?</label>
-                <div className="flex flex-wrap gap-2">
-                  {moods.map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setMood(m)}
-                      className={`px-3 py-1 rounded-full border text-sm ${
-                        mood === m 
-                          ? 'bg-indigo-600 text-white border-indigo-600' 
-                          : 'bg-white text-gray-800 border-gray-300 hover:bg-indigo-50'
-                      } transition-colors`}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Mood selection for user experience (backend currently only saves the text response)
-                </p>
-              </div>
+             
+             
 
               {submitError && <p className="text-red-500 mb-2 text-sm">{submitError}</p>}
               

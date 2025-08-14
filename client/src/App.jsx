@@ -152,6 +152,7 @@ import Hero from './pages/hero'
 import DailyPrompt from './components/DailyPrompt'
 import Signup from './pages/signup'
 import { Routes, Route } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -159,6 +160,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Hero />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/dailyprompt" element={<DailyPrompt/>}/>
+        <Route path="/dashboard" element={<Dashboard/>}/>
       </Routes>
     </div>
   )
