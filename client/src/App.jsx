@@ -148,11 +148,11 @@
 
 
 import React from 'react'
-import Hero from './pages/hero'
-import DailyPrompt from './components/DailyPrompt'
-import Signup from './pages/signup'
+import Hero from './pages/hero/hero'
+import DailyPrompt from './components/DailyPrompt/DailyPrompt'
+import Signup from './pages/signup/signup'
 import { Routes, Route } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/Dashboard/Dashboard';
 
 function App() {
   return (
