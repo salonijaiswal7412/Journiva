@@ -1,0 +1,18 @@
+.iridescence-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* keep background behind content */
+}
+
+.iridescence-container canvas {
+  position: absolute;   /* make canvas cover the container */
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 0;
+}
+

@@ -1,59 +1,169 @@
-.hero {
-  width: 100%;
+.main {
+  background: rgb(0, 0, 0);
+  width: 100vw;
   height: 100vh;
-  background-size: cover;
-  background-position: center;
+  color: rgb(221, 221, 228);
+  padding: 1.5rem;
+  position: absolute;
+}
+
+.container {
+  background: rgba(255, 255, 255, 0.091);
+  width: 80%;
+  height: 95%;
+  position: relative;
+  margin: auto;
+  top: 2.5%;
+  border-radius: 4rem;
+  display: flex;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.left {
+  height: 100%;
+  position: relative;
+  width: 45%;
+  margin: auto;
+  padding: 4rem 3rem;
+}
+
+.right {
+  height: 100%;
+  position: relative;
+  width: 55%;
+  margin: auto;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.content {
-  color: white;
-  text-align: center;
-  padding: 3rem 1.5rem;
-  max-width: 768px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.titleWrapper {
-  margin-bottom: 1.5rem;
-}
-
-.subtitle {
-  font-size: 2rem;
-  font-weight: 300;
-  letter-spacing: -0.5px;
-}
-
-.title {
-  font-size: clamp(3rem, 8vw, 6rem);
+.h1,
+.h2 {
+  font-size: 3rem;
+  color: #cdcccc;
   font-weight: 700;
-  margin-top: 0.5rem;
+  line-height: 1.2;
+  margin: 0;
 }
 
-.description {
-  font-size: 1.125rem;
-  font-weight: 300;
-  color: #d1d5db; /* similar to Tailwind gray-200 */
-  line-height: 1.75rem;
-  margin-bottom: 2rem;
-  padding: 0 1rem;
+.h2_2 {
+  font-size: 3.7rem;
+  font-weight: 500;
+  font-family: Huile;
+  color: white;
+  animation: journalColor 1.5s infinite alternate ease-in-out;
 }
 
-.button {
-  background: white;
-  color: black;
-  font-size: 1.125rem;
-  font-weight: 600;
-  padding: 0.75rem 2rem;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  border: none;
+.h2 {
+  margin-top: 0.3rem;
 }
 
-.button:hover {
-  background: #e5e7eb; /* similar to Tailwind gray-200 */
+.content {
+  margin-top: 2rem;
+  width: 100%;
+  color: rgb(134, 132, 132);
+  font-size: 1.1rem;
+}
+
+@keyframes journalColor {
+  0% {
+    color: white;
+  }
+  100% {
+    color: rgb(122, 57, 159);
+  }
+}
+
+.right > img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 1rem;
+}
+
+@font-face {
+  font-family: 'Huile';
+  src: url('../../assets/fonts/Huile.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ✅ Responsive Styling */
+@media (max-width: 1024px) {
+  .container {
+    width: 90%;
+    border-radius: 2rem;
+  }
+
+  .h1,
+  .h2 {
+    font-size: 2.5rem;
+  }
+
+  .h2_2 {
+    font-size: 3rem;
+  }
+
+  .content {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+    padding: 2rem;
+  }
+
+  .left,
+  .right {
+    width: 100%;
+    height: auto;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .h1,
+  .h2 {
+    font-size: 2rem;
+  }
+
+  .h2_2 {
+    font-size: 2.5rem;
+  }
+
+  .content {
+    font-size: 0.95rem;
+  }
+
+  .right > img {
+    max-width: 80%;
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  .h1,
+  .h2 {
+    font-size: 1.5rem;
+  }
+
+  .h2_2 {
+    font-size: 2rem;
+  }
+
+  .content {
+    font-size: 0.85rem;
+  }
+
+  .right > img {
+    max-width: 100%;
+  }
 }
