@@ -1,4 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
+import styles from './signup.module.css'
+import SplashCursor from '../../components/Cursors/Splash'
+import LiquidChrome from '../../components/LiquidChrome/LiquidChrome'
+import BlurText from '../../components/Texts/BlurText'
 
 function Signup() {
   const [isLogin, setIsLogin] = useState(false)
@@ -70,11 +74,9 @@ function Signup() {
       console.log('Response data:', data)
 
       if (response.ok) {
-        // Store token in localStorage
-        localStorage.setItem('token', data.token)
-        
+        // Store token in memory instead of localStorage for artifact compatibility
         console.log('Success:', data)
-        
+
         // Reset form
         setFormData({
           username: '',
@@ -96,128 +98,122 @@ function Signup() {
   }
 
   const handleGoogleAuth = () => {
-    // Redirect to Google OAuth with return URL to dashboard
+    // Google OAuth handles both login and signup automatically
+    // If user exists: logs them in
+    // If user doesn't exist: creates new account and logs them in
     window.location.href = 'http://localhost:5000/auth/google?redirect=/dashboard'
   }
 
-  return (
-    <div className='bg-[#243b4a] w-screen h-screen flex justify-center items-center'>
-      <div className="box rounded-4xl bg-white w-[70%] h-[90%] p-4">
-        <div className="logo h-4 text-xl font-bold text-[#243b4a]">Journiva</div>
-        
-        <div className='content mt-8'>
-          <h1 className='text-center text-2xl font-bold capitalize text-[#4e4d5c]'>
-            {isLogin ? 'Welcome back to your journey' : 'Start your journey to emotional clarity'}
-          </h1>
-          <h2 className='text-center w-[50%] text-gray-500 mx-auto mt-2 text-xs'>
-            {isLogin 
-              ? 'Sign in to continue your journaling and reflection practice'
-              : 'Create your free Journiva account to journal, reflect, and receive mindful daily prompts. Your thoughts, your space — always private.'
-            }
-          </h2>
+  const handleAnimationComplete = () => {
+    console.log('Animation completed!');
+  };
 
-          <div className="form-container w-[50%] mx-auto mt-4">
-            {error && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                {error}
-              </div>
+  return (
+    <div className={styles.main}>
+      <div className={styles.left}>
+        <LiquidChrome
+          baseColor={[0.4, 0.3, 0.8]}
+          speed={0.2}
+          amplitude={0.4}
+          interactive={false}
+        />
+      </div>
+      
+      <div className={styles.right}>
+        <BlurText
+          text={isLogin ? "Welcome Back!" : "Ready to Begin Your Story?"}
+          delay={150}
+          animateBy="words"
+          direction="top"
+          onAnimationComplete={handleAnimationComplete}
+          className={styles.h1}
+        />
+        
+        <h2 className='w-[70%]'>
+          {isLogin 
+            ? "Sign in to continue your journey of curious reading & dreaming." 
+            : "Join our community of curious readers & dreamers. Signing up takes less than a minute (promise!)."
+          }
+        </h2>
+
+        <div className={styles.box}>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          <div 
+            className={styles.google}
+            onClick={handleGoogleAuth}
+            style={{ 
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.6 : 1 
+            }}
+          >
+            Continue with Google
+          </div>
+          
+          <p className='text-gray-400 my-1'>OR</p>
+          
+          <form onSubmit={handleSubmit}>
+            <input 
+              type="text" 
+              name="username"
+              placeholder='enter name'
+              value={formData.username}
+              onChange={handleInputChange}
+              disabled={loading}
+              required
+            />
+            
+            {!isLogin && (
+              <input 
+                type="email" 
+                name="email"
+                placeholder='enter email'
+                value={formData.email}
+                onChange={handleInputChange}
+                disabled={loading}
+                required
+              />
             )}
             
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-1 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#243b4a] text-xs"
-                  placeholder="Enter your username"
-                  disabled={loading}
-                />
-              </div>
-
-              {!isLogin && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#243b4a] text-xs"
-                    placeholder="Enter your email"
-                    disabled={loading}
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-1 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#243b4a]"
-                  placeholder="Enter your password"
-                  disabled={loading}
-                />
-              </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="w-full bg-[#243b4a] text-white py-1 rounded-lg font-medium hover:bg-[#1e2f3a] transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
-              </button>
-            </div>
-
-            <div className="mt-2">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="px-2 bg-white text-gray-500">Or</span>
-                </div>
-              </div>
-
-              <button 
-                onClick={handleGoogleAuth}
-                disabled={loading}
-                className="w-full mt-2 bg-white border border-gray-300 text-gray-700 py-1 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Sign {isLogin ? 'in' : 'up'} with Google
-              </button>
-            </div>
-
-            <div className="mt-2 text-center">
-              <span className="text-gray-600 text-xs">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-              </span>
-              <button
-                onClick={() => setIsLogin(!isLogin)}
-                disabled={loading}
-                className="text-[#243b4a] font-medium text-sm hover:underline disabled:opacity-50"
-              >
-                {isLogin ? 'Sign up' : 'Sign in'}
-              </button>
-            </div>
-          </div>
+            <input 
+              type="password" 
+              name="password"
+              placeholder='enter password'
+              value={formData.password}
+              onChange={handleInputChange}
+              disabled={loading}
+              required
+            />
+            
+            <button 
+              type="submit"
+              disabled={loading}
+              style={{ 
+                opacity: loading ? 0.6 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Join Now')}
+            </button>
+          </form>
+          
+          <p className='mt-2 text-sm text-gray-400'>
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            <span 
+              onClick={() => setIsLogin(!isLogin)}
+              style={{ 
+                cursor: loading ? 'not-allowed' : 'pointer',
+                color: loading ? '#9ca3af' : '#3b82f6',
+                textDecoration: 'underline'
+              }}
+            >
+              {isLogin ? 'Sign up' : 'Login'}
+            </span>
+          </p>
         </div>
       </div>
     </div>
