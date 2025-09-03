@@ -5,14 +5,16 @@
     height: 100vh;
     display:flex;
     padding: auto;
+    text-align: center;
    
    
    
 }
 .h1{
     color: rgb(120, 13, 192);
-    font-size: 2.7rem;
+    font-size: 2.95rem;
     font-weight: 800;
+    
     
     
 
@@ -53,7 +55,7 @@ form>button{
 
 }
 form>button:hover{
-    border: 2px solid rgb(105, 53, 145);
+    border: 2px solid #780DC0;
       transform: scale(1.05);
 }
 
@@ -68,14 +70,16 @@ h2{
     border-radius: 1rem;
     height: fit-content;
     padding: 1rem;
-    margin-top: 2rem;
+    
     text-align: center;
+    margin: auto;
+    margin-top: 2rem;
 }
 .google{
     width: 35%;
     margin: auto;
     color: white;
-    border: 3px solid rgb(88, 16, 88);
+    border: 3px solid #780DC0;
     padding: .4rem;
     border-radius: .5rem;
     text-align: center;

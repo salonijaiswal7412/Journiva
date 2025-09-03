@@ -1,0 +1,23 @@
+h1{
+    color: white;
+    font-size: 3.5rem;
+    font-family: 'Huile';
+      animation: journalColor 1.5s infinite alternate ease-in-out;
+
+}
+@keyframes journalColor {
+  0% {
+    color: white;
+  }
+  100% {
+    color: rgb(122, 57, 159);
+  }
+}
+h2{
+    color: gray;
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin-bottom: 0;
+    letter-spacing: 0.4rem;
+    margin:0rem 1rem ;
+}

@@ -1,8 +1,21 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState } from 'react'
 import styles from './signup.module.css'
-import SplashCursor from '../../components/Cursors/Splash'
 import LiquidChrome from '../../components/LiquidChrome/LiquidChrome'
 import BlurText from '../../components/Texts/BlurText'
+
+// ✅ Left visual wrapped in memo so it won't re-render
+const LeftVisual = React.memo(() => {
+  return (
+    <div className={styles.left}>
+      <LiquidChrome
+        baseColor={[0.4, 0.3, 0.8]}
+        speed={0.2}
+        amplitude={0.4}
+        interactive={false}
+      />
+    </div>
+  )
+})
 
 function Signup() {
   const [isLogin, setIsLogin] = useState(false)
@@ -19,12 +32,10 @@ function Signup() {
       ...formData,
       [e.target.name]: e.target.value
     })
-    // Clear error when user starts typing
     if (error) setError('')
   }
 
   const redirectToDashboard = () => {
-    // Redirect to user dashboard
     window.location.href = '/dashboard'
   }
 
@@ -33,7 +44,6 @@ function Signup() {
     setLoading(true)
     setError('')
 
-    // Basic validation
     if (!formData.username || !formData.password || (!isLogin && !formData.email)) {
       setError('All fields are required')
       setLoading(false)
@@ -46,21 +56,12 @@ function Signup() {
         ? { username: formData.username, password: formData.password }
         : { username: formData.username, email: formData.email, password: formData.password }
 
-      console.log('Making request to:', `http://localhost:5000/api/users${endpoint}`)
-      console.log('Request body:', body)
-
       const response = await fetch(`http://localhost:5000/api/users${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
 
-      console.log('Response status:', response.status)
-      console.log('Response headers:', response.headers)
-
-      // Check if response is JSON
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
         const textResponse = await response.text()
@@ -71,26 +72,16 @@ function Signup() {
       }
 
       const data = await response.json()
-      console.log('Response data:', data)
 
       if (response.ok) {
-        // Store token in memory instead of localStorage for artifact compatibility
         console.log('Success:', data)
-
-        // Reset form
-        setFormData({
-          username: '',
-          email: '',
-          password: ''
-        })
-
-        // Redirect to dashboard
+        setFormData({ username: '', email: '', password: '' })
         redirectToDashboard()
       } else {
         setError(data.error || data.message || 'Something went wrong')
       }
     } catch (err) {
-      console.error('Full error object:', err)
+      console.error('Error:', err)
       setError(`Network error: ${err.message}`)
     } finally {
       setLoading(false)
@@ -98,38 +89,25 @@ function Signup() {
   }
 
   const handleGoogleAuth = () => {
-    // Google OAuth handles both login and signup automatically
-    // If user exists: logs them in
-    // If user doesn't exist: creates new account and logs them in
     window.location.href = 'http://localhost:5000/auth/google?redirect=/dashboard'
   }
 
-  const handleAnimationComplete = () => {
-    console.log('Animation completed!');
-  };
-
   return (
     <div className={styles.main}>
-      <div className={styles.left}>
-        <LiquidChrome
-          baseColor={[0.4, 0.3, 0.8]}
-          speed={0.2}
-          amplitude={0.4}
-          interactive={false}
-        />
-      </div>
-      
+      {/* ✅ Left side animation isolated */}
+      <LeftVisual />
+
+      {/* ✅ Right side form */}
       <div className={styles.right}>
         <BlurText
-          text={isLogin ? "Welcome Back!" : "Ready to Begin Your Story?"}
-          delay={150}
+          text={isLogin ? "Welcome Back to Journiva!" : "Ready to Begin Your Story?"}
+          delay={100}
           animateBy="words"
           direction="top"
-          onAnimationComplete={handleAnimationComplete}
           className={styles.h1}
         />
         
-        <h2 className='w-[70%]'>
+        <h2 className='w-[80%] m-auto'>
           {isLogin 
             ? "Sign in to continue your journey of curious reading & dreaming." 
             : "Join our community of curious readers & dreamers. Signing up takes less than a minute (promise!)."
@@ -143,19 +121,23 @@ function Signup() {
             </div>
           )}
 
-          <div 
-            className={styles.google}
+          {/* Google login button */}
+          <button
+            type="button"
             onClick={handleGoogleAuth}
+            disabled={loading}
+            className={styles.google}
             style={{ 
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.6 : 1 
             }}
           >
             Continue with Google
-          </div>
+          </button>
           
           <p className='text-gray-400 my-1'>OR</p>
           
+          {/* Main form */}
           <form onSubmit={handleSubmit}>
             <input 
               type="text" 
@@ -192,6 +174,7 @@ function Signup() {
             <button 
               type="submit"
               disabled={loading}
+              className={styles.submitBtn}
               style={{ 
                 opacity: loading ? 0.6 : 1,
                 cursor: loading ? 'not-allowed' : 'pointer'
